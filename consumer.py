@@ -47,32 +47,38 @@ class KafkaConsumer(threading.Thread):
 
     def run(self):
         try:
-            consumer = Consumer(
-                bootstrap_servers=self._boostrap_servers,
-                sasl_mechanism="PLAIN",
-                security_protocol="SASL_SSL",
-                sasl_plain_username=self._sasl_plain_username,
-                sasl_plain_password=self._sasl_plain_password,
-                auto_offset_reset="latest",  # earliest to get all the messages in the queue
-                api_version=(0, 10, 1),
-                group_id=self._group_id,
-                consumer_timeout_ms=self._consumer_timeout_ms,
-                max_poll_interval_ms=_KAFKA_MAX_INT_VALUE,
-                **self._kwargs
-            )
+            conf = {'bootstrap.servers': self._boostrap_servers,
+                    'group.id': self._group_id,
+                    'auto.offset.reset': 'smallest',
+                    'sasl.mechanisms': "PLAIN",
+                    'sasl.username': self._sasl_plain_username,
+                    'sasl.password': self._sasl_plain_password,
+                    'security.protocol': 'SASL_SSL'
+                    }
+            consumer = Consumer(conf)
 
             consumer.subscribe([self._topic])
             logger.info(f"Subscribing to topic: [{self._topic}] at {self._boostrap_servers}")
 
             while not self._stop_event.is_set():
-                for message in consumer:
-                    try:
-                        logger.info(f"Consuming {message.topic}-{message.partition}-{message.offset}")
+                try:
+                    message = consumer.poll()
+                    if message is None: continue
+                    if message.error():
+                        if message.error().code() == KafkaError._PARTITION_EOF:
+                            # End of partition event
+                            sys.stderr.write('%% %s [%d] reached end at offset %d\n' %
+                                             (message.topic(), message.partition(), message.offset()))
+                        elif message.error():
+                            raise KafkaException(message.error())
+                    else:
+                        logger.info(f"Consuming {message.topic()}-{message.partition()}-{message.offset()}")
+                        consumer.commit(asynchronous=True)
                         self._callback_function(message)
-                    except Exception as exception:
-                        logger.exception(f"The kafka event could not be consumed {exception}")
-                    if self._stop_event.is_set():
-                        break
+                except Exception as exception:
+                    logger.exception(f"The kafka event could not be consumed {exception}")
+                if self._stop_event.is_set():
+                    break
 
             logger.info(f"Stop event received for consumer of topic [{self._topic}]. Consumption will be stopped")
             consumer.close()

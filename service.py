@@ -4,7 +4,7 @@ import logging
 
 from consumer import KafkaConsumer
 from kafka_alert import KafkaAlertApi
-from assemblers.mvn_data_assembler import MVNDataAssembler
+from assemblers.semg_data_assembler import SEMGDataAssembler
 from udp_consumer import UDPConsumer
 
 load_dotenv()
@@ -30,8 +30,8 @@ class Service:
         consumer.start()
 
     def start_udp_consumer_thread(self):
-        mvn_data_assembler = MVNDataAssembler(self.configuration, self.confluent_config)
+        semg_data_assembler = SEMGDataAssembler(self.configuration, self.confluent_config)
         udp_consumer = UDPConsumer(
-            mvn_data_assembler=mvn_data_assembler
+            semg_data_assembler=semg_data_assembler
         )
         udp_consumer.start()

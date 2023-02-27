@@ -24,7 +24,7 @@ class IpcCommandAssembler(KafkaAssembler):
         :param kafka_consumer_record:
         :return:
         """
-        original = kafka_consumer_record.value.decode("utf-8")
+        original = kafka_consumer_record.value()
         original_event = json.loads(original)
 
         try:
@@ -78,7 +78,7 @@ class IpcCommandAssembler(KafkaAssembler):
                 logger.info(
                     f"Setting Calibration Step ID [{calibration_step_id_value}] to Session [{os.getenv(self._session_id_key)}]")
 
-                os.environ[self._step_id_key] = calibration_step_id_value
+                os.environ[self._step_id_key] = str(calibration_step_id_value)
                 os.environ[self._data_send_allow_key] = str(True)
 
             elif command == Commands.calibration_end.name:

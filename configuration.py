@@ -47,16 +47,16 @@ class _ProductionAlertConfiguration(AlertConfiguration):
     def __init__(self):
         super(self.__class__, self).__init__(_PRODUCTION_ENVIRONMENT)
 
-    def get_kafka_inertial_sensor_topic(self):
-        return f"inertialsensor-alert-production"
+    def get_kafka_semg_sensor_topic(self):
+        return f"semgsensor-alert-production"
 
 
 class _LocalAlertConfiguration(AlertConfiguration):
     def __init__(self):
         super(self.__class__, self).__init__(_LOCAL_ENVIRONMENT)
 
-    def get_kafka_inertial_sensor_topic(self):
-        return "inertialsensor-alerts-local"
+    def get_kafka_semg_sensor_topic(self):
+        return "semgsensor-alerts-local"
 
     def get_kafka_ipc_topic(self):
         return "ipc-alerts-local"
@@ -66,8 +66,8 @@ class _TestingAlertConfiguration(AlertConfiguration):
     def __init__(self):
         super(self.__class__, self).__init__(_TESTING_ENVIRONMENT)
 
-    def get_kafka_inertial_sensor_topic(self):
-        return "inertialsensor-alerts-local"
+    def get_kafka_semg_sensor_topic(self):
+        return "semgsensor-alerts-local"
 
     def get_kafka_ipc_topic(self):
         return "ipc-alerts-local"
@@ -108,7 +108,7 @@ class _KafkaConsumerConfiguration:
         return _get_kafka_bootstrap_servers(self._environment)
 
     def get_consumer_group_id(self):
-        return f"inertialsensor-service-{self._environment}"
+        return f"semg-service-helper-{self._environment}"
 
     def get_consumer_timeout_ms(self):
         return float(os.getenv("KAFKA_CONSUMER_TIMEOUT_MS", "10000"))
