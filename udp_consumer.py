@@ -16,7 +16,7 @@ class UDPConsumer(threading.Thread):
         self._stop_event = threading.Event()
         self._semg_data_assembler = semg_data_assembler
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.connection.bind(('127.0.0.1', 20001))
+        self.connection.bind(('127.0.0.1', 20002))
 
     def stop(self):
         self._stop_event.set()
