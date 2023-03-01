@@ -9,6 +9,7 @@ class Commands(Enum):
     calibration_start = {"name": "calibration_start", }
     calibration_step_start = {"name": "calibration_step_start", }
     calibration_end = {"name": "calibration_end", }
+    calibration_pause = {"name": "calibration_pause", }
     treatment_start = {"name": "treatment_start"}
     treatment_one_min_end = {"name": "treatment_one_min_end", }
     treatment_end = {"name": "treatment_end", }
