@@ -7,21 +7,20 @@ from json import load
 
 from producer import KafkaProducer
 from session_type import SessionType
-from kafka_alert import KafkaAlertApi
 
 logger = logging.getLogger(__name__)
 SERVICE_BASE_DIR = os.path.dirname(__file__)
 
 
 class SEMGDataAssembler:
-    def __init__(self, configuration, confluent_config):
-        self.kafka_alert = KafkaAlertApi(configuration)
+    def __init__(self, configuration, confluent_config, local_storage):
         self.formatted_data = []
         self.producer = KafkaProducer(confluent_config, configuration.get_kafka_semg_sensor_topic())
         self.dataframe = {}
         self.configuration = configuration
         self.confluent_config = confluent_config
         self.allow_sending_key = self.configuration.get_environ_name_data_send_allow()
+        self._local_storage = local_storage
 
     def _should_allow_message_send(self):
         """
@@ -29,10 +28,11 @@ class SEMGDataAssembler:
         :return:
         """
         allow_sending = False
-        if self.allow_sending_key in os.environ and os.getenv(self.allow_sending_key) in ('True', 'true', '1'):
+        if self._local_storage.getItem(self.allow_sending_key) and self._local_storage.getItem(
+                self.allow_sending_key) in ('True', 'true', '1'):
             allow_sending = True
 
-        logger.info(f"[SEMG Sensor Environment] Allow Message Send to Kafka Configured to: {allow_sending}")
+        logger.info(f"[Inertial Sensor Environment] Allow Message Send to Kafka Configured to: {allow_sending}")
         return allow_sending
 
     def _prepare_kafka_message(self, data):
@@ -43,22 +43,22 @@ class SEMGDataAssembler:
         :param message:
         :return:
         """
-        if not os.getenv(self.configuration.get_environ_name_session_type()) or not os.getenv(
-                self.configuration.get_environ_name_session_id()):
+        if not self._local_storage.getItem(self.configuration.get_environ_name_session_type()) or \
+                not self._local_storage.getItem(self.configuration.get_environ_name_session_id()):
             logger.info("No session type set in the environment. Ignoring message sending to Kafka.")
             return None
 
-        elif os.getenv(self.configuration.get_environ_name_session_type()) == SessionType.CALIBRATION.name:
+        elif self._local_storage.getItem(self.configuration.get_environ_name_session_type()) == SessionType.CALIBRATION.name:
             kafka_message = {
                 "type": "calibration",
-                "session": os.getenv(self.configuration.get_environ_name_session_id()),
-                "step": os.getenv(self.configuration.get_environ_name_calibration_step_id()),
+                "session": self._local_storage.getItem(self.configuration.get_environ_name_session_id()),
+                "step": self._local_storage.getItem(self.configuration.get_environ_name_calibration_step_id()),
                 "data": data
             }
         else:
             kafka_message = {
                 "type": "treatment",
-                "session": os.getenv(self.configuration.get_environ_name_session_id()),
+                "session": self._local_storage.getItem(self.configuration.get_environ_name_session_id()),
                 "data": data
             }
         return kafka_message

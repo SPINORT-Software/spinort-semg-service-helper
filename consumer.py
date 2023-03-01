@@ -2,7 +2,7 @@ import logging
 import threading
 from abc import ABCMeta, abstractmethod
 
-from confluent_kafka import Consumer, OFFSET_BEGINNING
+from confluent_kafka import Consumer, OFFSET_BEGINNING, KafkaException, KafkaError
 
 logger = logging.getLogger(__name__)
 _KAFKA_MAX_INT_VALUE = 2147483647
@@ -53,7 +53,8 @@ class KafkaConsumer(threading.Thread):
                     'sasl.mechanisms': "PLAIN",
                     'sasl.username': self._sasl_plain_username,
                     'sasl.password': self._sasl_plain_password,
-                    'security.protocol': 'SASL_SSL'
+                    'security.protocol': 'SASL_SSL',
+                    'session.timeout.ms': 10000
                     }
             consumer = Consumer(conf)
 

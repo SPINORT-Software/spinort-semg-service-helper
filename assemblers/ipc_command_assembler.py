@@ -9,13 +9,14 @@ logger = logging.getLogger(__name__)
 
 
 class IpcCommandAssembler(KafkaAssembler):
-    def __init__(self, configuration):
+    def __init__(self, configuration, local_storage):
         self._configuration = configuration
 
         self._session_id_key = configuration.get_environ_name_session_id()
         self._session_type_key = configuration.get_environ_name_session_type()
         self._step_id_key = configuration.get_environ_name_calibration_step_id()
         self._data_send_allow_key = configuration.get_environ_name_data_send_allow()
+        self._local_storage = local_storage
 
     def assemble(self, kafka_consumer_record):
         """
@@ -24,7 +25,7 @@ class IpcCommandAssembler(KafkaAssembler):
         :param kafka_consumer_record:
         :return:
         """
-        original = kafka_consumer_record.value()
+        original = kafka_consumer_record.value().decode("utf-8")
         original_event = json.loads(original)
 
         try:
@@ -46,9 +47,9 @@ class IpcCommandAssembler(KafkaAssembler):
                 session_id_value = original_event.get("session")
                 session_type_value = original_event.get("session_type")
 
-                os.environ[self._session_id_key] = session_id_value
-                os.environ[self._session_type_key] = session_type_value
-                os.environ[self._data_send_allow_key] = str(False)
+                self._local_storage.setItem(self._session_id_key, session_id_value)
+                self._local_storage.setItem(self._session_type_key, session_type_value)
+                self._local_storage.setItem(self._data_send_allow_key, str(False))
 
             elif command == Commands.calibration_step_start.name:
                 """
@@ -57,13 +58,7 @@ class IpcCommandAssembler(KafkaAssembler):
                 - Calibration Step ID 
                 - Data Send Allow = True
                 """
-                if self._session_id_key not in os.environ:
-                    logger.info("Error processing calibration_step_start - step ID for calibration session will not "
-                                "be set to environment. First set Session ID in the environment before setting Step "
-                                "ID.")
-                    return False
-
-                if not os.getenv(self._session_id_key):
+                if not self._local_storage.getItem(self._session_id_key):
                     logger.info("Error processing calibration_step_start - step ID for calibration session will not "
                                 "be set to environment. First set Session ID in the environment before setting Step "
                                 "ID.")
@@ -76,10 +71,10 @@ class IpcCommandAssembler(KafkaAssembler):
                     return False
 
                 logger.info(
-                    f"Setting Calibration Step ID [{calibration_step_id_value}] to Session [{os.getenv(self._session_id_key)}]")
+                    f"Setting Calibration Step ID [{calibration_step_id_value}] to Session [{self._local_storage.getItem(self._session_id_key)}]")
 
-                os.environ[self._step_id_key] = str(calibration_step_id_value)
-                os.environ[self._data_send_allow_key] = str(True)
+                self._local_storage.setItem(self._step_id_key, calibration_step_id_value)
+                self._local_storage.setItem(self._data_send_allow_key, str(True))
 
             elif command == Commands.calibration_end.name:
                 """
@@ -89,25 +84,25 @@ class IpcCommandAssembler(KafkaAssembler):
                 - Data Send Allow = False
                 """
                 logger.info("Calibration end command received.")
-                os.environ[self._session_id_key] = ""
-                os.environ[self._session_type_key] = ""
-                os.environ[self._step_id_key] = ""
-                os.environ[self._data_send_allow_key] = str(False)
+                self._local_storage.setItem(self._session_id_key, "")
+                self._local_storage.setItem(self._session_type_key, "")
+                self._local_storage.setItem(self._step_id_key, "")
+                self._local_storage.setItem(self._data_send_allow_key, str(False))
 
             elif command == Commands.treatment_start_data_send.name:
-                os.environ[self._data_send_allow_key] = str(True)
+                self._local_storage.setItem(self._data_send_allow_key, str(True))
 
             elif command == Commands.treatment_one_min_end.name:
-                os.environ[self._data_send_allow_key] = str(False)
+                self._local_storage.setItem(self._data_send_allow_key, str(False))
                 # TODO: Very Important for Treatment one minute end command to work in sync with the engine
                 #  Sleep for 1 minute and set the allow sending to True
                 #   sleep(60)
                 #   os.environ[self._data_send_allow_key] = str(True)
 
             elif command == Commands.treatment_end.name:
-                os.environ[self._session_id_key] = ""
-                os.environ[self._session_type_key] = ""
-                os.environ[self._data_send_allow_key] = str(False)
+                self._local_storage.setItem(self._session_id_key, "")
+                self._local_storage.setItem(self._session_type_key, "")
+                self._local_storage.setItem(self._data_send_allow_key, str(False))
 
             else:
                 logger.info(f"An unrecognized command is provided. Command = [{command}]")

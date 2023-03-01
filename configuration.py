@@ -24,6 +24,12 @@ class AlertConfiguration(metaclass=ABCMeta):
     def __init__(self, environment: str):
         self._environment = environment
 
+    def get_local_storage_workspace_name(self):
+        return f"SMARTBACK_LOCAL_STORAGE_{self._environment.upper()}"
+
+    def get_local_storage_workspace_backend(self):
+        return "json"
+
     def get_kafka_producer_configuration(self):
         return _KafkaProducerConfiguration(self._environment)
 

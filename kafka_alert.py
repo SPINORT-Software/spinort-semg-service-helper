@@ -7,8 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 class KafkaAlertApi:
-    def __init__(self, configuration):
-        self._ipc_command_assembler = IpcCommandAssembler(configuration)
+    def __init__(self, configuration, local_storage):
+        self._ipc_command_assembler = IpcCommandAssembler(configuration, local_storage)
 
     def accept_record(self, kafka_consumer_record):
         try:
