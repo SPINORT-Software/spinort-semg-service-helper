@@ -1,5 +1,6 @@
 from abc import ABCMeta
 import os
+import random
 
 from producer import KafkaProducerConfiguration
 
@@ -109,12 +110,17 @@ class _KafkaProducerConfiguration(KafkaProducerConfiguration):
 class _KafkaConsumerConfiguration:
     def __init__(self, environment):
         self._environment = environment
+        self.group_id_helper = "smartbackkafkagroupid"
 
     def get_bootstrap_servers(self):
         return _get_kafka_bootstrap_servers(self._environment)
 
     def get_consumer_group_id(self):
         return f"semg-service-helper-{self._environment}"
+
+    def get_consumer_group_id(self):
+        shuffled_id = f"{(''.join(random.sample(self.group_id_helper, len(self.group_id_helper))))}_{random.randrange(0, 9999999, 2)}"
+        return f"semg-service-helper-{self._environment}-{shuffled_id}"
 
     def get_consumer_timeout_ms(self):
         return float(os.getenv("KAFKA_CONSUMER_TIMEOUT_MS", "10000"))
