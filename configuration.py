@@ -119,8 +119,8 @@ class _KafkaConsumerConfiguration:
         return f"semg-service-helper-{self._environment}"
 
     def get_consumer_group_id(self):
-        shuffled_id = f"{(''.join(random.sample(self.group_id_helper, len(self.group_id_helper))))}_{random.randrange(0, 9999999, 2)}"
-        return f"semg-service-helper-{self._environment}-{shuffled_id}"
+        customer_id = os.getenv("spinort_customer_id", "SPINORT_DEFAULT_ID")
+        return f"semg-service-helper-{self._environment}-{customer_id}"
 
     def get_consumer_timeout_ms(self):
         return float(os.getenv("KAFKA_CONSUMER_TIMEOUT_MS", "10000"))

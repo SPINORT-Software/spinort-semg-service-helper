@@ -26,7 +26,8 @@ class Service:
 
     def start_ipc_consumer_thread(self):
         consumer = KafkaConsumer(
-            self.configuration.get_kafka_consumer_configuration(),
+            self.confluent_config,
+            self.configuration,
             self.configuration.get_kafka_ipc_topic(),
             callback_function=self.kafka_alert.accept_record
         )
