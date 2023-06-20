@@ -93,6 +93,9 @@ class IpcCommandAssembler(KafkaAssembler):
             elif command == Commands.treatment_start_data_send.name:
                 self._local_storage.setItem(self._data_send_allow_key, str(True))
 
+            elif command == Commands.data_send_pause.name:
+                self._local_storage.setItem(self._data_send_allow_key, str(False))
+
             elif command == Commands.treatment_one_min_end.name:
                 self._local_storage.setItem(self._data_send_allow_key, str(False))
                 # TODO: Very Important for Treatment one minute end command to work in sync with the engine

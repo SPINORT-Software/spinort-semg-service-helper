@@ -14,6 +14,7 @@ class Commands(Enum):
     treatment_one_min_end = {"name": "treatment_one_min_end", }
     treatment_end = {"name": "treatment_end", }
     treatment_start_data_send = {"name": "treatment_start_data_send", }
+    data_send_pause = {"name": "data_send_pause", }
 
     def __init__(self, value):
         if "name" not in value:
